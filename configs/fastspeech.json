@@ -1,0 +1,115 @@
+{
+    "name": "fastspeech",
+    "n_gpu": 1,
+    "data": {
+      "train": {
+        "batch_size": 64,
+        "batch_expand_size": 64,
+        "num_workers": 4,
+        "pin_memory": true,
+        "datasets": [
+          {
+            "type": "LJSpeechDataset",
+            "args": {
+              "data_path": "data/train.txt",
+              "mel_gt_path": "data/mels",
+              "alignment_path": "data/alignments",
+              "text_cleaners": ["english_cleaners"]
+            }
+          }
+        ]
+      },
+        "eval": {
+          "batch_size": 1,
+          "batch_expand_size": 1,
+          "pin_memory": true,
+          "datasets": [
+            {
+              "type": "InferenceDataset",
+              "args": {
+                "prompts": [
+                  "A defibrillator is a device that gives a high energy electric shock to the heart of someone who is in cardiac arrest",
+                  "Massachusetts Institute of Technology may be best known for its math, science and engineering education",
+                  "Wasserstein distance or Kantorovich Rubinstein metric is a distance function defined between probability distributions on a given metric space"
+                ],
+                "alphas": [0.8, 1.0, 1.2],
+                "text_cleaners": ["english_cleaners"]
+              }
+            }
+          ]
+        }
+    },
+    "arch": {
+      "type": "FastSpeech",
+      "args": {
+        "vocab_size": 148,
+        "embed_dim": 256,
+        "padding_idx": 0,
+        "max_seq_len": 3000,
+        "n_heads": 2,
+        "dropout": 0.1,
+        "feed_forward_args": {
+          "feed_forward_dim": 1024,
+          "kernel_sizes": [9, 1],
+          "paddings": [4, 0]
+        },
+        "n_blocks": 4,
+        "duration_predictor_args": {
+          "hidden_dim": 256,
+          "kernel_size": 3
+        },
+        "num_mels": 80
+      }
+    },
+    "train_metrics": [
+      {
+        "type": "MSEMetric",
+        "args": {
+          "name": "mel_loss"
+        }
+      },
+      {
+        "type": "L1Metric",
+        "args": {
+          "name": "duration_loss"
+        }
+      }
+    ],
+    "optimizer": {
+        "type": "Adam",
+        "args": {
+          "lr": 3e-4
+        }
+      },
+    "loss": {
+      "type": "FastSpeechLoss",
+      "args": {
+        "alpha": 1.0,
+        "beta": 1.0
+      }
+    },
+    "lr_scheduler": {
+      "type": "OneCycleLR",
+      "args": {
+        "steps_per_epoch": 640,
+        "epochs": 35,
+        "anneal_strategy": "cos",
+        "max_lr": 3e-4,
+        "pct_start": 0.2
+      }
+    },
+    "waveglow_ckpt": "/workspace/data/waveglow/pretrained_model/waveglow_256channels_ljs_v2.pt",
+    "trainer": {
+      "epochs": 35,
+      "save_dir": "saved/",
+      "save_period": 5,
+      "verbosity": 2,
+      "monitor": "min loss",
+      "early_stop": 100,
+      "visualize": "wandb",
+      "wandb_project": "tts_project",
+      "wandb_run_name": "FastSpeech",
+      "len_epoch": 10,
+      "grad_norm_clip": 1
+    }
+}
