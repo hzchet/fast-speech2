@@ -22,11 +22,12 @@ class InferenceDataset(BaseDataset):
 
     def _create_index(self, prompts: List[str], alphas: List[int], betas: List[int], gammas: List[int], text_cleaners: List[str]):
         index = []
-        for prompt in prompts:
+        for i, prompt in enumerate(prompts):
             for alpha in alphas:
                 for beta in betas:
                     for gamma in gammas:
                         index.append({
+                            "text_id": i,
                             "text": torch.tensor(text.text_to_sequence(prompt, text_cleaners)),
                             "alpha": alpha,
                             "beta": beta,

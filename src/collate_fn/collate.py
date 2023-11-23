@@ -19,11 +19,13 @@ def reprocess_tensor(batch, cut_list, split):
                               (0, max_len-int(length_src_row)), 'constant'))
     src_pos = torch.from_numpy(np.array(src_pos))
     texts = pad_1D_tensor(texts)
-    if split == 'eval':
+    if split == 'eval' or split == 'test':
+        text_ids = [batch[ind]["text_id"] for ind in cut_list]
         alphas = [batch[ind]["alpha"] for ind in cut_list]
         betas = [batch[ind]["beta"] for ind in cut_list]
         gammas = [batch[ind]["gamma"] for ind in cut_list]
         return {
+            "text_id": text_ids,
             "text": texts,
             "src_pos": src_pos,
             "alpha": alphas,
